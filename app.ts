@@ -12,6 +12,7 @@ import { watch } from "./src/controller/watchForLiquidation";
 import { startGetPosition } from "./src/controller/getPosition";
 import { getPrices } from "./src/controller/getOraclePrice";
 import { getPoolData } from "./src/controller/getPoolDetails";
+import { setCollAddresses } from "./src/util/getCollAddresses";
 const httpServer = createServer(app);
 
 
@@ -49,7 +50,8 @@ app.use(express.json());
 
 
 (async function start() {
-    getPrices()
+    await setCollAddresses()
+    await getPrices()
     getPoolData()
     startGetPosition()
     watch();

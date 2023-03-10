@@ -1,7 +1,6 @@
 import axios from "axios";
 import Big from "big.js";
-import { connectToDB, LiqMonitor } from "../db/db";
-import { getAddress } from "../util/constant";
+import { LiqMonitor } from "../db/db";
 import { getAllPrices } from "./getOraclePrice";
 import { getPoolDebtUSD } from "./getPoolDetails";
 import { liquidate } from "./liquidate";
@@ -22,7 +21,7 @@ async function getPosition() {
             let data = await axios({
 
                 method: "post",
-                url: `https://api.thegraph.com/subgraphs/name/prasad-kumkar/synthex`,
+                url: `https://api.thegraph.com/subgraphs/name/prasad-kumkar/synthex-dev`,
                 data:
                 {
                     query: `
@@ -43,7 +42,6 @@ async function getPosition() {
                         collateralBalances {
                           collateral{
                             token{
-                              name
                               id
                               symbol
                             }
@@ -60,11 +58,12 @@ async function getPosition() {
             })
 
             let accounts = data.data.data.accounts;
+            
             if (accounts.length == 0) {
-                console.log("break")
+                // console.log("break")
                 break
             }
-
+           
             _skip++
             // await Promise.all([])
             for (let ele of accounts) {
@@ -81,9 +80,9 @@ async function getPosition() {
                     }
                     let balance = pEle.balance
                     let feeTokenPrice = pool.feeToken.priceUSD;
-                    let price = getAllPrices('cUSDC'); // cUSDC address
                     let feeTokenId = pool.feeToken.id;
-                    if (price && feeTokenId == getAddress["cUSDC"]) {
+                    let price = await getAllPrices(pool.id, feeTokenId); 
+                    if (price && price != "0") {
                         feeTokenPrice = price
                     }
                     let debtPerc = Big(balance).div(supply).toString();
@@ -95,8 +94,9 @@ async function getPosition() {
                     for (let cEle of pEle.collateralBalances) {
                         colLiqFactors.push([cEle.collateral.baseLTV, cEle.collateral.liqThreshold]);
                         let colPrice = cEle.collateral.priceUSD;             // without decimalsget
-                        let price = getAllPrices(cEle.collateral.token.symbol);
-                        if (price) {
+                        let price = await getAllPrices(pool.id, cEle.collateral.token.id);
+
+                        if (price && price != "0") {
                             colPrice = price;
                         }
                         let colUSD = Big(cEle.balance).div(1e18).mul(colPrice).toString();   // converting balance to without decimals

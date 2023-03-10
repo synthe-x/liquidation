@@ -1,7 +1,6 @@
 import axios from "axios";
 import Big from "big.js";
 import { LiqMonitor } from "../db/db";
-import { getAddress } from "../util/constant";
 import { getAllPrices } from "./getOraclePrice";
 import { getPoolDebtUSD } from "./getPoolDetails";
 import { liquidate } from "./liquidate";
@@ -22,7 +21,7 @@ async function watchForLiquidation() {
         let getIds = await LiqMonitor.findOne().lean();
 
         if (!getIds || Object.keys(getIds?.ids).length == 0) {
-            console.log("Nothing to watch")
+            // console.log("Nothing to watch")
             return
         }
 
@@ -34,14 +33,14 @@ async function watchForLiquidation() {
             let input: any = JSON.stringify(allIds.slice(start, end));
 
             if (allIds.slice(start, end).length == 0) {
-                console.log("Done Watching")
+                // console.log("Done Watching")
                 return
             }
 
             let data = await axios({
 
                 method: "post",
-                url: `https://api.thegraph.com/subgraphs/name/prasad-kumkar/synthex`,
+                url: `https://api.thegraph.com/subgraphs/name/prasad-kumkar/synthex-dev`,
                 data:
                 {
                     query: `
@@ -79,7 +78,7 @@ async function watchForLiquidation() {
             })
 
             let accounts = data.data.data.accounts;
-            console.log("Inside Watching");
+            // console.log("Inside Watching");
             for (let ele of accounts) {
                 let userId: string = ele.id;
                 console.log(userId);
@@ -90,12 +89,15 @@ async function watchForLiquidation() {
                     let supply = pool.totalSupply;
                     let debt = pool.totalDebtUSD;    // without decimals
                     let poolDebt = getPoolDebtUSD(pool.id);
-                    if (poolDebt) {debt = poolDebt;}
+                    if (poolDebt) { debt = poolDebt; }
                     let balance = pEle.balance
                     let feeTokenPrice = pool.feeToken.priceUSD;
-                    let price = getAllPrices('cUSDC'); // cUSDC address
                     let feeTokenId = pool.feeToken.id;
-                    if (price && feeTokenId == getAddress["cUSDC"]) {feeTokenPrice = price;}
+                    let price = await getAllPrices(pool.id, feeTokenId);
+                    if (price && price != "0") {
+                        feeTokenPrice = price
+                        // console.log("from watching ", price)
+                    }
                     let debtPerc = Big(balance).div(supply).toString();
                     let userDebtUSD = Big(debtPerc).mul(debt).toString();
                     console.log("Usd debt", Number(userDebtUSD).toFixed(8));
@@ -106,8 +108,8 @@ async function watchForLiquidation() {
 
                         colLiqFactors.push([cEle.collateral.baseLTV, cEle.collateral.liqThreshold]);
                         let colPrice = cEle.collateral.priceUSD;             // without decimals
-                        let price = getAllPrices(cEle.collateral.token.symbol);
-                        if (price) {colPrice = price;}
+                        let price = await getAllPrices(pool.id, cEle.collateral.token.id);
+                        if (price && price != "0") { colPrice = price; }
                         let colUSD = Big(cEle.balance).div(1e18).mul(colPrice).toString();   // converting balance to without decimals
                         userTotalColUSD = Big(userTotalColUSD).plus(colUSD).toString();
                     }
@@ -132,7 +134,7 @@ async function watchForLiquidation() {
                                 { $set: { ids: getIds?.ids } }
                             )
                         }
-                        if (Number(avgFactor) < Number(userHealthFactor)) {flag = true;}
+                        if (Number(avgFactor) < Number(userHealthFactor)) { flag = true; }
                     }
                 }
                 if (flag == false) {
@@ -144,9 +146,6 @@ async function watchForLiquidation() {
                     )
                 }
             }
-
-
-
             start = end;
             end = end + 50;
         }
@@ -157,34 +156,3 @@ async function watchForLiquidation() {
         console.log(`Error @ getPosition`, error)
     }
 }
-
-
-`{
-    accountPositions(where: { account_in: ["0x186b4b5da9e6817c21818deb83bba02c4c66627f", "0x0ed6a1f7a99e8bc1c752e4515f7ab3afe20bdbf7"] }) {
-        id
-        balance
-      account{
-            id
-         positions {
-             pool {
-                    id
-                    totalDebtUSD
-                    totalSupply
-                }
-                balance
-                collateralBalances {
-                  collateral{
-                         token{
-                            name
-                        }
-                        priceUSD
-                        liqThreshold
-                        baseLTV
-                    }
-                    balance
-                }
-            }
-        }
-    }
-
-}`
