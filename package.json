@@ -1,0 +1,36 @@
+{
+  "name": "liquidation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/synthe-x/liquidation.git",
+  "author": "mubashirzebi <mubashshirzebi@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "ts-node app.ts"
+  },
+  "dependencies": {
+    "@sentry/node": "^7.28.1",
+    "@sentry/tracing": "^7.28.1",
+    "@types/big.js": "^6.1.6",
+    "@types/compression": "^1.7.2",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^4.17.14",
+    "@types/morgan": "^1.9.3",
+    "axios": "^1.1.3",
+    "big.js": "^6.2.1",
+    "compression": "^1.7.4",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "ethers": "5.7.2",
+    "express": "^4.18.2",
+    "helmet": "^6.0.1",
+    "minimist": "^1.2.7",
+    "mongoose": "^6.7.0",
+    "morgan": "^1.10.0",
+    "path": "^0.12.7",
+    "pm2": "^5.2.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.4"
+  },
+  "devDependencies": {}
+}
