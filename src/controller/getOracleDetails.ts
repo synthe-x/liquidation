@@ -34,7 +34,7 @@ async function _oracleMulticall(input: any) {
             mInput
         );
 
-       
+
         for (let i = 0; i < resp[1].length; i++) {
 
             let prices = itf.decodeFunctionResult("getAssetsPrices", resp[1][i])[0];
@@ -75,7 +75,12 @@ export async function startOracleData() {
             await fs.writeFile(path.join(__dirname + "/../util/config.json"), JSON.stringify(config));
 
         }, 10 * 1000)
-
+        let wait = new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve("success")
+            }, 10 * 1000)
+        });
+        await wait;
     }
     catch (error) {
         console.log(`Error @ getPoolData`, error);
