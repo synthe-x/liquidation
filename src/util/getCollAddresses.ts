@@ -5,65 +5,65 @@ import { promises as fs } from "fs";
 
 
 export async function setCollAddresses() {
-    try {
+  try {
 
-        let config = JSON.parse((await (fs.readFile(__dirname + "/config.json"))).toString());
-        config = {};
-        let data = await axios({
+    let config = JSON.parse((await (fs.readFile(__dirname + "/config.json"))).toString());
+    config = {};
+    let data = await axios({
 
-            method: "post",
-            url: `https://api.thegraph.com/subgraphs/name/prasad-kumkar/synthex-dev`,
-            data:
-            {
-                query: `
+      method: "post",
+      url: `https://api.thegraph.com/subgraphs/name/prasad-kumkar/synthex-dev`,
+      data:
+      {
+        query: `
                 {
                     pools {
                       id
                       name
                       symbol
+                      oracle
                       feeToken{
                         id
                         token{
-                          name
                           symbol
                         }
                       }
                       collaterals {
                         token {
                           id
-                          name
                           symbol
                         }
                       }
                     }
                   }`
-            }
-        });
+      }
+    });
 
 
 
-        const pools = data.data.data.pools;
-        // console.log(pools)
-        for (let pEle of pools) {
-            config[pEle.id] = {
-                name: pEle.name,
-                symbol: pEle.symbol,
-                feeToken: pEle.feeToken.id,
-                collaterals: {}
-            };
+    const pools = data.data.data.pools;
 
-            for (let cEle of pEle.collaterals) {
-                // console.log(cEle.token.symbol)
-                config[pEle.id]["collaterals"][cEle.token.id] = ["0", cEle.token.symbol];
-                config[pEle.id]["collaterals"][pEle.feeToken.id] = ["0", pEle.feeToken.token.symbol];
+    for (let pEle of pools) {
+      config[pEle.id] = {
+        name: pEle.name,
+        symbol: pEle.symbol,
+        feeToken: pEle.feeToken.id,
+        oracle: pEle.oracle,
+        collaterals: {}
+      };
 
-            }
-        }
+      for (let cEle of pEle.collaterals) {
 
-        await fs.writeFile(__dirname + "/config.json", JSON.stringify(config));
+        config[pEle.id]["collaterals"][cEle.token.id] = ["0", cEle.token.symbol];
+        config[pEle.id]["collaterals"][pEle.feeToken.id] = ["0", pEle.feeToken.token.symbol];
 
+      }
     }
-    catch (error) {
-        console.log(`Error @ getCollAddresses`, error)
-    }
+
+    await fs.writeFile(__dirname + "/config.json", JSON.stringify(config));
+
+  }
+  catch (error) {
+    console.log(`Error @ getCollAddresses`, error)
+  }
 }

@@ -10,9 +10,9 @@ import * as Tracing from "@sentry/tracing";
 import compression from "compression";
 import { watch } from "./src/controller/watchForLiquidation";
 import { startGetPosition } from "./src/controller/getPosition";
-import { getPrices } from "./src/controller/getOraclePrice";
-import { getPoolData } from "./src/controller/getPoolDetails";
 import { setCollAddresses } from "./src/util/getCollAddresses";
+import { startPoolData } from "./src/controller/getPoolDetails";
+import { startOracleData } from "./src/controller/getOracleDetails";
 const httpServer = createServer(app);
 
 
@@ -51,8 +51,8 @@ app.use(express.json());
 
 (async function start() {
     await setCollAddresses()
-    await getPrices()
-    getPoolData()
+    await startOracleData()
+    await startPoolData()
     startGetPosition()
     watch();
 })()

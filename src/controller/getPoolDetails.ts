@@ -1,36 +1,72 @@
 import Big from "big.js";
-import { ethers } from "ethers";
-import { poolCAddress, poolFAddress, provider } from "../util/constant";
+import { BigNumber, ethers } from "ethers";
+import { provider } from "../util/constant";
 import { getABI } from "../util/utils";
+import { promises as fs } from "fs";
+import path from "path";
 
 
-let setPoolDebtUSD: any = {}
+let poolData: any = {}
 
-
-async function _getPoolData(address: string) {
+/**
+ * @dev this function is use to get pool getTotalDebtUSD and totalSupply.
+ * @param {*} poolAddress (string[]) array of string containing pool ids.
+ */
+async function _poolMulticall(poolAddress: string[]) {
     try {
-        const abi = await getABI("Pool");
-        const pool = new ethers.Contract(address, abi, provider)
-        const totalDebtUSD = await pool.getTotalDebtUSD();
-        setPoolDebtUSD[`${address}`] = Big(totalDebtUSD).div(1e18).toString();
+
+        const multicall = new ethers.Contract(
+            "0x7a69be2c6827F45A6A4eE94b7D1Ed8484d17fcb8",
+            await getABI("Multicall2"),
+            provider
+        );
+
+        const itf: ethers.utils.Interface = new ethers.utils.Interface(await getABI("Pool"));
+        const input: any = [];
+        for (let ele of poolAddress) {
+            input.push([ele, itf.encodeFunctionData("getTotalDebtUSD", [])]);
+            input.push([ele, itf.encodeFunctionData("totalSupply", [])]);
+        }
+        let resp = await multicall.callStatic.aggregate(
+            input
+        );
+
+        let outPut: string[] = [];
+
+        for (let i = 0; i < poolAddress.length; i++) {
+            outPut.push(Big(BigNumber.from(resp[1][i]).toString()).toString());
+            poolData[poolAddress[i]] = [
+                Big(BigNumber.from(resp[1][2 * i]).toString()).div(1e18).toString(),
+                Big(BigNumber.from(resp[1][2 * i + 1]).toString()).toString()
+            ]
+        }
+
     }
     catch (error) {
-        console.log(`Error @ _getPoolData`, error);
+        console.log(`Error @ poolMulticall`, error)
+        return null
     }
 }
 
-export function getPoolData() {
-    try{
-        setInterval(()=>{
-            _getPoolData(poolCAddress);
-            _getPoolData(poolFAddress);
+export async function startPoolData() {
+    try {
+        const config = JSON.parse((await fs.readFile(path.join(__dirname + "/../util/config.json"))).toString());
+        setInterval(() => {
+            const poolAddresses = Object.keys(config);
+            _poolMulticall(poolAddresses);
         }, 10 * 1000)
+
     }
-    catch(error){
-        console.log(`Error @ getPoolData`, error)
+    catch (error) {
+        console.log(`Error @ getPoolData`, error);
     }
 }
 
-export function getPoolDebtUSD(address: string){
-    return setPoolDebtUSD[address];
+export function getPoolData(poolId: string) {
+    try {
+        return poolData[poolId];
+    }
+    catch (error) {
+        console.log(`Error @ getPoolData`)
+    }
 }

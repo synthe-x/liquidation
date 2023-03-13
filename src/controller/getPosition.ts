@@ -1,13 +1,12 @@
 import axios from "axios";
 import Big from "big.js";
 import { LiqMonitor } from "../db/db";
-import { getAllPrices } from "./getOraclePrice";
-import { getPoolDebtUSD } from "./getPoolDetails";
+import { getAllPrices } from "./getOracleDetails";
+import { getPoolData } from "./getPoolDetails";
 import { liquidate } from "./liquidate";
 
 
 export function startGetPosition() {
-    getPosition()
     setInterval(() => {
         getPosition()
     }, 1 * 60 * 1000)
@@ -31,10 +30,7 @@ async function getPosition() {
                       positions {
                         pool {
                           id
-                          totalDebtUSD
-                          totalSupply
                           feeToken{
-                            priceUSD
                             id
                           }
                         }
@@ -43,9 +39,7 @@ async function getPosition() {
                           collateral{
                             token{
                               id
-                              symbol
                             }
-                            priceUSD
                             liqThreshold
                             baseLTV
                           }
@@ -58,47 +52,35 @@ async function getPosition() {
             })
 
             let accounts = data.data.data.accounts;
-            
+
             if (accounts.length == 0) {
-                // console.log("break")
                 break
             }
-           
+
             _skip++
-            // await Promise.all([])
+
             for (let ele of accounts) {
                 let userId = ele.id;
                 console.log(userId)
                 for (let pEle of ele.positions) {
 
                     let pool = pEle.pool;
-                    let supply = pool.totalSupply;
-                    let debt = pool.totalDebtUSD;    // without decimals
-                    let poolDebt = getPoolDebtUSD(pool.id);
-                    if(poolDebt) {
-                        debt = poolDebt
-                    }
+                    let poolData = getPoolData(pool.id);
+                    let debt = poolData[0];   //pool.totalDebtUSD;    
+                    let supply = poolData[1];  //pool.totalSupply;
                     let balance = pEle.balance
-                    let feeTokenPrice = pool.feeToken.priceUSD;
                     let feeTokenId = pool.feeToken.id;
-                    let price = await getAllPrices(pool.id, feeTokenId); 
-                    if (price && price != "0") {
-                        feeTokenPrice = price
-                    }
+                    let feeTokenPrice = await getAllPrices(pool.id, feeTokenId);      //pool.feeToken.priceUSD;
                     let debtPerc = Big(balance).div(supply).toString();
                     let userDebtUSD = Big(debtPerc).mul(debt).toString();
+
                     console.log("Usd debt", Number(userDebtUSD).toFixed(8));
                     let userTotalColUSD = "0";
                     let colLiqFactors: number[][] = [];  // collateral liquidity factors ["baseLtv", liqThreshold]
 
                     for (let cEle of pEle.collateralBalances) {
                         colLiqFactors.push([cEle.collateral.baseLTV, cEle.collateral.liqThreshold]);
-                        let colPrice = cEle.collateral.priceUSD;             // without decimalsget
-                        let price = await getAllPrices(pool.id, cEle.collateral.token.id);
-
-                        if (price && price != "0") {
-                            colPrice = price;
-                        }
+                        let colPrice = await getAllPrices(pool.id, cEle.collateral.token.id);
                         let colUSD = Big(cEle.balance).div(1e18).mul(colPrice).toString();   // converting balance to without decimals
                         userTotalColUSD = Big(userTotalColUSD).plus(colUSD).toString();
 
@@ -121,7 +103,6 @@ async function getPosition() {
                             liquidate(userId, liquidationAmount, colId, feeTokenId);
                             if (allIds?.ids[userId]) {
                                 delete allIds?.ids[userId]
-
                                 await LiqMonitor.findOneAndUpdate(
                                     {},
                                     { $set: { ids: allIds?.ids } }
