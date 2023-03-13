@@ -51,8 +51,9 @@ async function _poolMulticall(poolAddress: string[]) {
 export async function startPoolData() {
     try {
         const config = JSON.parse((await fs.readFile(path.join(__dirname + "/../util/config.json"))).toString());
+        const poolAddresses = Object.keys(config);
+        _poolMulticall(poolAddresses);
         setInterval(() => {
-            const poolAddresses = Object.keys(config);
             _poolMulticall(poolAddresses);
         }, 10 * 1000)
 
