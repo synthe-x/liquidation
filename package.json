@@ -6,7 +6,8 @@
   "author": "mubashirzebi <mubashshirzebi@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "dev": "ts-node app.ts"
+    "dev": "ts-node app.ts",
+    "build": "tsc -p ."
   },
   "dependencies": {
     "@sentry/node": "^7.28.1",
