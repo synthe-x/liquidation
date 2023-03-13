@@ -8,7 +8,7 @@ import LiqMonitorSchema from "../schema/LiquidationMonitor";
 const LiqMonitor = mongoose.model("LiqMonitor", LiqMonitorSchema)
 
 async function connectToDB() {
-    // console.log(process.env.MONGO_URL + `-synthex-liq?retryWrites=true&w=majority`);
+    mongoose.set('strictQuery', true)
     mongoose.connect(process.env.MONGO_URL + `-synthex-liq?retryWrites=true&w=majority`! as string)
         .then(() => {
             console.log("MongoDb is connected")
@@ -25,4 +25,4 @@ async function connectToDB() {
 
 
 
-export {connectToDB, LiqMonitor};
+export { connectToDB, LiqMonitor };

@@ -23,31 +23,32 @@ async function getPosition() {
                 url: `https://api.thegraph.com/subgraphs/name/prasad-kumkar/synthex-dev`,
                 data:
                 {
-                    query: `
-                {
-                    accounts (first: 100, skip: ${_skip * 100}){
-                      id
-                      positions {
-                        pool {
-                          id
-                          feeToken{
+                    query:
+                     `
+                        {
+                            accounts (first: 100, skip: ${_skip * 100}){
                             id
-                          }
-                        }
-                        balance
-                        collateralBalances {
-                          collateral{
-                            token{
-                              id
+                            positions {
+                                pool {
+                                id
+                                feeToken{
+                                    id
+                                }
+                                }
+                                balance
+                                collateralBalances {
+                                collateral{
+                                    token{
+                                    id
+                                    }
+                                    liqThreshold
+                                    baseLTV
+                                }
+                                balance
+                                }
                             }
-                            liqThreshold
-                            baseLTV
-                          }
-                          balance
-                        }
-                      }
-                    }
-                  }`
+                            }
+                        }`
                 }
             })
 

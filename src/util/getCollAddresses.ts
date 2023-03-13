@@ -15,31 +15,30 @@ export async function setCollAddresses() {
       url: `https://api.thegraph.com/subgraphs/name/prasad-kumkar/synthex-dev`,
       data:
       {
-        query: `
-                {
-                    pools {
-                      id
-                      name
-                      symbol
-                      oracle
-                      feeToken{
-                        id
-                        token{
-                          symbol
-                        }
-                      }
-                      collaterals {
-                        token {
-                          id
-                          symbol
-                        }
-                      }
-                    }
-                  }`
+        query:
+         `
+          {
+              pools {
+                id
+                name
+                symbol
+                oracle
+                feeToken{
+                  id
+                  token{
+                    symbol
+                  }
+                }
+                collaterals {
+                  token {
+                    id
+                    symbol
+                  }
+                }
+              }
+            }`
       }
     });
-
-
 
     const pools = data.data.data.pools;
 
@@ -59,8 +58,9 @@ export async function setCollAddresses() {
 
       }
     }
-
-    await fs.writeFile(__dirname + "/config.json", JSON.stringify(config));
+    if (Object.keys(config).length > 0) {
+      await fs.writeFile(__dirname + "/config.json", JSON.stringify(config));
+    }
 
   }
   catch (error) {

@@ -43,8 +43,8 @@ async function _poolMulticall(poolAddress: string[]) {
 
     }
     catch (error) {
-        console.log(`Error @ poolMulticall`, error)
-        return null
+        console.log(`Error @ poolMulticall`, error);
+        return null;
     }
 }
 

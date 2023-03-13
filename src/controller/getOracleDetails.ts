@@ -49,7 +49,7 @@ async function _oracleMulticall(input: any) {
 
     }
     catch (error) {
-        console.log(`Error @ poolMulticall`, error)
+        console.log(`Error @ _oracleMulticall`, error);
         return null
     }
 }
@@ -63,13 +63,13 @@ export async function startOracleData() {
 
             const input: any = []
             for (let i in poolAddresses) {
-                input.push([config[poolAddresses[i]]["collaterals"], config[poolAddresses[i]]["oracle"]])
+                input.push([config[poolAddresses[i]]["collaterals"], config[poolAddresses[i]]["oracle"]]);
             }
 
             let outPut = await _oracleMulticall(input);
 
             for (let i = 0; i < outPut.length; i++) {
-                config[poolAddresses[i]]["collaterals"] = outPut[i][0]
+                config[poolAddresses[i]]["collaterals"] = outPut[i][0];
             }
 
             await fs.writeFile(path.join(__dirname + "/../util/config.json"), JSON.stringify(config));
@@ -77,17 +77,17 @@ export async function startOracleData() {
         }, 10 * 1000)
         let wait = new Promise((resolve, reject) => {
             setTimeout(() => {
-                resolve("success")
+                resolve("success");
             }, 10 * 1000)
         });
         await wait;
     }
     catch (error) {
-        console.log(`Error @ getPoolData`, error);
+        console.log(`Error @ startOracleData`, error);
     }
 }
 
 export async function getAllPrices(poolId: string, collateralId: string) {
     let config = JSON.parse((await (fs.readFile(path.join(__dirname + "/../util/config.json")))).toString());
-    return config[poolId]["collaterals"][collateralId][0]
+    return config[poolId]["collaterals"][collateralId][0];
 };

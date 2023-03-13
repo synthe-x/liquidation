@@ -16,7 +16,7 @@ export async function liquidate(userId: string, amount: string, collateralId: st
 
         amount = ethers.utils.parseEther(amount).toString();
 
-        console.log(userId, amount, collateralId, synthId)
+        console.log("liquidation details", userId, amount, collateralId, synthId);
 
         const liq = await synth.connect(user1).liquidate(userId, amount, collateralId);
 
